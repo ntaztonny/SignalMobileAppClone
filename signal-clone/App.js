@@ -2,14 +2,22 @@ import "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
+import { createStackNavigator } from "@react-navigation/stack";
+import LoginScreen from "./screens/LoginScreen";
+
+const Stack = createStackNavigator();
+const globalScreenOptions = {
+  headerStyle: { backgroundColor: "#2C6BED" },
+  headerTitleStyle: { color: "white" },
+  headerTintColor: "white",
+};
 
 export default function App() {
   return (
     <NavigationContainer>
-      <View style={styles.container}>
-        <Text>This is a signal clone!!</Text>
-        <StatusBar style="white" />
-      </View>
+      <Stack.Navigator screenOptions={globalScreenOptions}>
+        <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
