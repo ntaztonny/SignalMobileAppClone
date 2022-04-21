@@ -1,11 +1,22 @@
-import { View, Text, StyleSheet } from "react-native";
-import React from "react";
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import React, { useLayoutEffect } from "react";
+import { StatusBar } from "expo-status-bar";
+import CustomListItems from "../Components/CustomListItems";
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Signal",
+    });
+  }, []);
   return (
-    <View>
-      <Text>HomeScreen</Text>
-    </View>
+    <SafeAreaView>
+      <ScrollView>
+        <CustomListItems />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

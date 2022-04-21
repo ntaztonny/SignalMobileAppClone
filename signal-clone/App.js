@@ -19,7 +19,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={globalScreenOptions}
-        initialRouteName="LoginScreen"
+        initialRouteName="Home"
       >
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
