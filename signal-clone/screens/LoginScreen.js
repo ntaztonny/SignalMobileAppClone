@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useNavigation } from "@react-navigation/native";
 import { KeyboardAvoidingView } from "react-native";
 import { auth } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -22,7 +23,11 @@ const LoginScreen = () => {
     return unsubscribe;
   }, []);
 
-  const signIn = () => {};
+  const signIn = () => {
+    signInWithEmailAndPassword(auth, email, password).catch((err) =>
+      alert(err.message)
+    );
+  };
   const register = () => {};
   return (
     <KeyboardAvoidingView
@@ -50,6 +55,7 @@ const LoginScreen = () => {
           value={password}
           secureTextEntry
           onChangeText={(text) => setPassword(text)}
+          onSubmitEditing={signIn}
         />
       </View>
       <Button onPress={signIn} containerStyle={styles.button} title="login" />
