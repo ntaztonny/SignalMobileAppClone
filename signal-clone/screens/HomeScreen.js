@@ -6,14 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import CustomListItems from "../Components/CustomListItems";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign, SimpleLineIcons } from "@expo/vector-icons";
 
 import { Avatar } from "react-native-elements";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import { collection, doc, getDoc, onSnapshot } from "firebase/firestore";
 
 const HomeScreen = () => {
   const [chats, setChats] = useState([]);
@@ -22,6 +23,22 @@ const HomeScreen = () => {
   const signOutUser = () => {
     auth.signOut().then(navigation.replace("Login"));
   };
+
+  const enterChat = (id, chatName) => {
+    navigation.navigate("Chat", { id, chatName });
+  };
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "chats"), (snapshot) => {
+      setChats(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        }))
+      );
+    });
+    return unsubscribe;
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -69,8 +86,15 @@ const HomeScreen = () => {
   }, [navigation]);
   return (
     <SafeAreaView>
-      <ScrollView>
-        <CustomListItems />
+      <ScrollView style={StyleSheet.container}>
+        {chats.map(({ id, data: { chatName } }) => (
+          <CustomListItems
+            key={id}
+            id={id}
+            chatName={chatName}
+            enterChat={enterChat}
+          />
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -79,5 +103,7 @@ const HomeScreen = () => {
 export default HomeScreen;
 
 const style = StyleSheet.create({
-  container: {},
+  container: {
+    height: "100%",
+  },
 });
