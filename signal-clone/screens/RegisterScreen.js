@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { Button, Input, Text } from "react-native-elements";
 import { useNavigation } from "@react-navigation/native";
 import { auth } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const RegisterScreen = () => {
   const [name, setName] = useState("");
@@ -22,13 +22,14 @@ const RegisterScreen = () => {
   const register = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((authUser) => {
-        console.log("returned user", authUser);
-        authUser.user.updateProfile({
+        updateProfile(auth.currentUser, {
           displayName: name,
           photoURL:
             imageURL ||
             "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_960_720.png",
-        });
+        })
+          .then(console.log("created User"))
+          .catch((err) => alert(err.message));
       })
       .catch((error) => alert(error.message));
   };

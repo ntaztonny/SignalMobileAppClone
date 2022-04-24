@@ -1,12 +1,51 @@
-import { StyleSheet, Text, TouchableOpacityBase, View } from "react-native";
-import React, { useLayoutEffect } from "react";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import React, { useLayoutEffect, useState } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Avatar } from "react-native-elements";
+import { AntDesign, FontAwesome, Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { auth, db } from "../firebase";
+import {
+  addDoc,
+  collection,
+  doc,
+  Firestore,
+  onSnapshot,
+  serverTimestamp,
+  orderBy,
+} from "firebase/firestore";
+import CustomListItems from "../Components/CustomListItems";
 
 const ChatScreen = () => {
   const navigation = useNavigation();
   const { params } = useRoute();
   const { id, chatName } = params;
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  const sendMessage = () => {
+    Keyboard.dismiss();
+    addDoc(collection(db, "chats", id, "messages"), {
+      timestamp: serverTimestamp(),
+      message: input,
+      displayName: auth.currentUser.displayName,
+      email: auth.currentUser.email,
+      photoURL: auth.currentUser.photoURL,
+    });
+    setInput("");
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -28,18 +67,181 @@ const ChatScreen = () => {
 
       headerLeft: () => (
         <View>
-          <TouchableOpacityBase> </TouchableOpacityBase>
+          <TouchableOpacity
+            style={{ marginLeft: 10 }}
+            onPress={() => navigation.goBack()}
+          >
+            <AntDesign name="arrowleft" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      ),
+
+      headerRight: () => (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            width: 80,
+            marginRjght: 20,
+          }}
+        >
+          <TouchableOpacity>
+            <FontAwesome name="video-camera" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Ionicons name="call" size={24} color="white" />
+          </TouchableOpacity>
         </View>
       ),
     });
   }, [navigation]);
+
+  useLayoutEffect(() => {
+    // don't forget to add an orderBy
+    const unsubscribe = onSnapshot(
+      collection(db, "chats", id, "messages"),
+      (snapshot) => {
+        setMessages(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            data: doc.data(),
+          }))
+        );
+      }
+    );
+    return unsubscribe;
+  }, [navigation]);
   return (
-    <View>
-      <Text>ChatScreen</Text>
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+      <StatusBar style="light" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+        keyboardVerticalOffset={90}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <>
+            <ScrollView contentContainerStyle={{ paddingTop: 15 }}>
+              {messages.map(({ id, data }) =>
+                data.email === auth.currentUser.email ? (
+                  <View key={id} style={styles.receiver}>
+                    <Avatar
+                      position="absolute"
+                      rounded
+                      //WEB
+                      containerStyle={{
+                        position: "absolute",
+                        bottom: -15,
+                        right: -5,
+                      }}
+                      source={{
+                        uri:
+                          messages[0]?.data.photoURL ||
+                          "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_960_720.png",
+                      }}
+                      size={30}
+                    />
+                    <Text style={styles.receiverText}>{data.message}</Text>
+                  </View>
+                ) : (
+                  <View style={styles.sender}>
+                    <Avatar
+                      position="absolute"
+                      rounded
+                      //wEB
+                      containerStyle={{
+                        position: "absolute",
+                        bottom: -15,
+                        left: -5,
+                      }}
+                      source={{ uri: auth.currentUser.photoURL }}
+                    />
+                    <Text style={styles.senderText}>{data.message}</Text>
+                    <Text style={styles.senderName}>{data.displayName}</Text>
+                  </View>
+                )
+              )}
+            </ScrollView>
+            <View style={styles.footer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="signal message"
+                value={input}
+                onSubmitEditing={sendMessage}
+                onChangeText={(text) => {
+                  setInput(text);
+                }}
+              />
+              <TouchableOpacity onPress={sendMessage} activeOpacity={0.5}>
+                <Ionicons name="send" size={24} color="#2B68E6" />
+              </TouchableOpacity>
+            </View>
+          </>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 export default ChatScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    padding: 15,
+  },
+  textInput: {
+    width: "90%",
+    bottom: 0,
+    height: 40,
+    marginRight: 15,
+    borderColor: "transparent",
+    backgroundColor: "#ECECEC",
+    padding: 10,
+    color: "grey",
+    borderRadius: 30,
+  },
+  sender: {
+    padding: 15,
+    backgroundColor: "#2B68E6",
+    alignSelf: "flex-start",
+    borderRadius: 20,
+    margin: 15,
+    maxWidth: "80%",
+    position: "relative",
+  },
+  senderName: {
+    left: 10,
+    paddingRight: 10,
+    fontSize: 10,
+    color: "white",
+  },
+  senderText: {
+    color: "white",
+    fontWeight: "500",
+    marginLeft: 10,
+    marginBottom: 15,
+  },
+
+  receiver: {
+    padding: 15,
+    backgroundColor: "#ECECEC",
+    alignSelf: "flex-end",
+    borderRadius: 20,
+    marginRight: 15,
+    marginBottom: 20,
+    maxWidth: "80%",
+    position: "relative",
+  },
+
+  receiverText: {
+    color: "black",
+    fontWeight: "500",
+    marginLeft: 10,
+  },
+});
