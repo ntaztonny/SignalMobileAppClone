@@ -20,8 +20,6 @@ import { auth, db } from "../firebase";
 import {
   addDoc,
   collection,
-  doc,
-  Firestore,
   onSnapshot,
   serverTimestamp,
   orderBy,
@@ -144,7 +142,7 @@ const ChatScreen = () => {
                     <Text style={styles.receiverText}>{data.message}</Text>
                   </View>
                 ) : (
-                  <View style={styles.sender}>
+                  <View key={id} style={styles.sender}>
                     <Avatar
                       position="absolute"
                       rounded
